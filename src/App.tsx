@@ -158,6 +158,9 @@ function App() {
     if (el) {
       const top = el.getBoundingClientRect().top + window.scrollY - 76;
       window.scrollTo({ top, behavior: 'smooth' });
+    } else {
+      // Target section isn't rendered (e.g. results view) — go to top.
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, []);
 

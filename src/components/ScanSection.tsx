@@ -21,7 +21,7 @@ const STEPS = [
   {
     icon: Eye,
     title: 'Analyze',
-    body: 'AI measures visible concerns like pores, redness, spots and texture.',
+    body: 'AI measures visible concerns like acne, pores, texture and wrinkles.'
   },
   {
     icon: Sparkles,
@@ -88,7 +88,7 @@ export function ScanSection({
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6 border-t border-ivory-200 pt-8">
               {[
                 ['~60s', 'To results'],
-                ['10+', 'Concerns tracked'],
+                ['4', 'Concerns measured'],
                 ['0', 'Photos stored'],
               ].map(([stat, label]) => (
                 <div key={label}>

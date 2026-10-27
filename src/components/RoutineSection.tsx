@@ -191,6 +191,20 @@ export function RoutineSection({ hasResults, result }: RoutineSectionProps) {
           </div>
         </div>
 
+        {/* Honest budget disclosure */}
+        <div className="mt-6 rounded-2xl border border-ivory-200 bg-ivory-50/80 p-5">
+          <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-charcoal-500">
+            <Wallet className="h-4 w-4" /> About spending preferences
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-charcoal-500">
+            Your routine style guides how many steps are included, but DERMALENS
+            cannot confirm whether a product fits your budget. All catalog prices
+            are currently unverified, so no item is marked as affordable. Each
+            product card shows “Check current regional price” and links to the
+            official manufacturer information page for current pricing.
+          </p>
+        </div>
+
         {!hasResults && (
           <div className="mt-8 rounded-2xl border border-dashed border-terracotta-500/40 bg-terracotta-500/5 p-5 text-center">
             <p className="text-sm leading-relaxed text-charcoal-700">
