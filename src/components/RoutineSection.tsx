@@ -377,7 +377,7 @@ export function RoutineSection({ hasResults, result }: RoutineSectionProps) {
 
       {showPassport && (
         <RoutinePassport
-          result={result}
+          result={result ?? null}
           preferences={preferences}
           onClose={() => setShowPassport(false)}
         />
