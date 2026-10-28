@@ -23,7 +23,10 @@ import {
   FOCUS_ESTIMATE_LABEL,
 } from '@/lib/recommendationEngine';
 import { ProductCard } from './ProductCard';
+import { PipelineExplainer } from './PipelineExplainer';
+import { RoutinePassport } from './RoutinePassport';
 import { TrustNotice } from './TrustNotice';
+import { FileText } from 'lucide-react';
 
 interface RoutineSectionProps {
   hasResults: boolean;
@@ -56,6 +59,7 @@ export function RoutineSection({ hasResults, result }: RoutineSectionProps) {
   const [intensity, setIntensity] = useState<RoutineIntensity>('balanced');
   const [sensitivity, setSensitivity] = useState<SensitivityLevel>('none');
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
+  const [showPassport, setShowPassport] = useState(false);
 
   const preferences: UserPreferences = useMemo(
     () => ({ goals: selectedGoals, intensity, sensitivity }),
@@ -216,6 +220,25 @@ export function RoutineSection({ hasResults, result }: RoutineSectionProps) {
           </div>
         )}
 
+        {/* Pipeline explainer for judges */}
+        <div className="mt-10">
+          <PipelineExplainer />
+        </div>
+
+        {/* Routine Passport */}
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setShowPassport(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-sage-300 bg-sage-50 px-6 py-3 text-sm font-medium text-sage-700 shadow-soft transition-all duration-300 hover:bg-sage-100 hover:shadow-lift"
+          >
+            <FileText className="h-4 w-4" /> View Routine Passport
+          </button>
+          <p className="ml-4 self-center text-xs text-charcoal-400">
+            A printable one-page plan you can save as PDF.
+          </p>
+        </div>
+
         {/* Routine part toggle */}
         <div className="mt-10 flex items-center justify-center">
           <div
@@ -351,6 +374,14 @@ export function RoutineSection({ hasResults, result }: RoutineSectionProps) {
           <TrustNotice variant="card" />
         </div>
       </div>
+
+      {showPassport && (
+        <RoutinePassport
+          result={result}
+          preferences={preferences}
+          onClose={() => setShowPassport(false)}
+        />
+      )}
     </section>
   );
 }

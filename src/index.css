@@ -36,3 +36,31 @@
     content: '';
   }
 }
+
+/* Print styles for the Routine Passport */
+@media print {
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .passport-doc {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 16px !important;
+    font-size: 11pt !important;
+  }
+  .passport-section,
+  .passport-step {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  h1, h2, h3 {
+    color: #1a1a1a !important;
+  }
+}

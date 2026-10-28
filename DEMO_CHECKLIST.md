@@ -34,27 +34,51 @@ one actually ran during the recording.
    - Point out the source attribution banner ("Measured by the YouCam API").
    - If masks were returned, toggle one overlay on.
 
-5. **Routine & goals** (~30s)
+5. **Evidence Trail** (~30s) — NEW
+   - Tap a concern card to open the Evidence Trail panel.
+   - Walk through the four sections:
+     - "What YouCam returned" — actual raw_score, ui_score, mask availability.
+     - "How DERMALENS interpreted it" — the focus estimate formula and its
+       limitation.
+     - "How the routine responds" — which steps link to this concern and why.
+     - "What remains unknown" — no diagnosis, no efficacy guarantee.
+   - If a mask is available, click "Show [concern] mask" to display it.
+   - Click "All concerns" to return to the full list.
+
+6. **Routine & goals** (~30s)
    - Scroll to the Routine & products section.
    - Select one or two goals (e.g. "Breakout-prone appearance").
    - Toggle the routine style between Essentials / Balanced / Optional targeted.
    - Set skin sensitivity to "Yes" — show how the optional targeted step
      disappears and the data note explains why.
 
-6. **Product shortlist** (~20s)
+7. **Pipeline explainer** (~15s) — NEW
+   - Expand "How DERMALENS makes a recommendation".
+   - Walk through the 6-step pipeline, noting the "YouCam API" vs
+     "DERMALENS engine" source badges.
+
+8. **Routine Passport** (~20s) — NEW
+   - Click "View Routine Passport".
+   - Show the preview: branding, goals, analysis summary, AM/PM steps,
+     products with official info links, limitations, medical disclaimer.
+   - Point out the "Print / Save as PDF" button.
+   - Note that no photo is embedded and no data was uploaded.
+   - Close the passport.
+
+9. **Product shortlist** (~20s)
    - Scroll to the curated product cards.
    - Open "Why this match?" on one card — show the goal/concern/category reasons.
    - Point out "Check current regional price" and "Availability not verified".
    - Click "View official product information" to show it opens the real
      manufacturer page (CeraVe / Neutrogena / The Ordinary).
 
-7. **Trust & close** (~15s)
-   - Scroll to the "Why these recommendations?" panel.
-   - End on the TrustNotice: "Not a medical diagnosis."
+10. **Trust & close** (~10s)
+    - Scroll to the "Why these recommendations?" panel.
+    - End on the TrustNotice: "Not a medical diagnosis."
 
 ## If the live analysis fails
 - Show the error state and the crop-recovery button (if face-too-small).
 - Do NOT retry automatically. Explain the error and end the recording,
   or crop and retry once manually.
 
-## Total estimated time: ~3 minutes
+## Total estimated time: ~4 minutes

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ArrowLeft, ImageOff, Info, Layers } from 'lucide-react';
-import type { SkinAnalysisResult, SkinOverlay } from '@/types/analysis';
+import type { SkinAnalysisResult, SkinOverlay, UserPreferences } from '@/types/analysis';
 import { ConcernCard, ConcernEmpty } from './ConcernCard';
+import { EvidenceTrailPanel } from './EvidenceTrailPanel';
+import { generateRecommendations } from '@/lib/recommendationEngine';
 import { TrustNotice } from './TrustNotice';
 
 interface ResultsSectionProps {
@@ -18,12 +20,23 @@ export function ResultsSection({
   const [activeOverlay, setActiveOverlay] = useState<SkinOverlay | null>(
     result.overlays[0] ?? null,
   );
+  const [selectedConcernId, setSelectedConcernId] = useState<string | null>(null);
 
   // Priority = highest DERMALENS focus estimate (most worth focusing on).
   // YouCam scores are health-favorable, so we sort by focusEstimate, NOT score.
   const sorted = [...result.concerns].sort((a, b) => b.focusEstimate - a.focusEstimate);
   const topConcerns = sorted.slice(0, 4);
   const otherConcerns = sorted.slice(4);
+
+  // Build routine once for the evidence trail (balanced defaults so the trail
+  // shows all possible steps; the interactive routine section lets the user
+  // refine).
+  const defaultPrefs: UserPreferences = {
+    goals: [],
+    intensity: 'balanced',
+    sensitivity: 'none',
+  };
+  const recommendations = generateRecommendations(result, defaultPrefs);
 
   return (
     <section className="animate-fade-in pt-28 sm:pt-32">
@@ -145,28 +158,59 @@ export function ResultsSection({
             )}
           </div>
 
-          {/* Right: concerns */}
+          {/* Right: concerns or evidence trail */}
           <div>
-            <h2 className="text-xl">Priority focus areas</h2>
-            <p className="mt-1.5 text-sm text-charcoal-500">
-              Ordered by our focus estimate — where a routine could help most.
-            </p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {topConcerns.length > 0 ? (
-                topConcerns.map((c) => <ConcernCard key={c.id} concern={c} />)
-              ) : (
-                <ConcernEmpty label="priority" />
-              )}
-            </div>
-
-            {otherConcerns.length > 0 && (
+            {selectedConcernId ? (
+              <EvidenceTrailPanel
+                concernId={selectedConcernId}
+                result={result}
+                preferences={defaultPrefs}
+                routine={recommendations.routine}
+                overlays={result.overlays}
+                onBack={() => setSelectedConcernId(null)}
+                onShowMask={(overlay) => setActiveOverlay(overlay)}
+              />
+            ) : (
               <>
-                <h3 className="mt-10 text-lg">Also measured</h3>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {otherConcerns.map((c) => (
-                    <ConcernCard key={c.id} concern={c} />
-                  ))}
+                <h2 className="text-xl">Priority focus areas</h2>
+                <p className="mt-1.5 text-sm text-charcoal-500">
+                  Ordered by our focus estimate — where a routine could help most.
+                  Tap a concern to see its full evidence trail.
+                </p>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  {topConcerns.length > 0 ? (
+                    topConcerns.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedConcernId(c.id)}
+                        className="text-left transition-transform duration-200 hover:-translate-y-0.5"
+                      >
+                        <ConcernCard concern={c} />
+                      </button>
+                    ))
+                  ) : (
+                    <ConcernEmpty label="priority" />
+                  )}
                 </div>
+
+                {otherConcerns.length > 0 && (
+                  <>
+                    <h3 className="mt-10 text-lg">Also measured</h3>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      {otherConcerns.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setSelectedConcernId(c.id)}
+                          className="text-left transition-transform duration-200 hover:-translate-y-0.5"
+                        >
+                          <ConcernCard concern={c} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -18,6 +18,7 @@
 import type {
   ProductMatch,
   ProductMatchReason,
+  RoutineCategory,
   RoutineStep,
   SkinAnalysisResult,
   SkinConcern,
@@ -423,6 +424,118 @@ export interface RecommendationResult {
 
 export const FOCUS_ESTIMATE_LABEL =
   'DERMALENS focus estimate — an application-generated way to help prioritize your routine. It is not a clinical severity score.';
+
+/* --------------------------- Evidence Trail ------------------------------ */
+
+export interface EvidenceTrailStep {
+  stepId: string;
+  part: 'morning' | 'evening';
+  label: string;
+  category: RoutineCategory;
+  rationale: string;
+  matchedProductIds: string[];
+}
+
+export interface EvidenceTrail {
+  concernId: string;
+  concernLabel: string;
+  /** Actual YouCam raw_score (health-favorable, higher = healthier). */
+  rawScore: number | null;
+  /** Actual YouCam ui_score (health-favorable, higher = healthier). */
+  uiScore: number | null;
+  /** Whether YouCam returned a mask for this concern. */
+  hasMask: boolean;
+  /** DERMALENS application estimate (100 - rawScore), or null when unavailable. */
+  focusEstimate: number | null;
+  /** Routine steps linked to this concern or a matching goal. */
+  relatedSteps: EvidenceTrailStep[];
+  /** Whether this concern was boosted by a user-selected goal. */
+  boostedByGoal: boolean;
+  /** The goal that matched this concern, if any. */
+  matchingGoal: UserGoal | null;
+  /** What remains unknown about this concern. */
+  unknowns: string[];
+}
+
+/**
+ * Build an evidence trail for a single concern, tracing from the YouCam
+ * measurement through to the routine steps it influenced. Never fabricates
+ * scores or masks.
+ */
+export function buildEvidenceTrail(
+  concernId: string,
+  result: SkinAnalysisResult,
+  preferences: UserPreferences,
+  routine: RoutineStep[],
+): EvidenceTrail | null {
+  const concern = result.concerns.find((c) => c.id === concernId);
+  if (!concern) return null;
+
+  const hasValidRawScore =
+    typeof concern.rawScore === 'number' && Number.isFinite(concern.rawScore);
+  const focusEstimate = hasValidRawScore
+    ? clampScore(100 - concern.rawScore)
+    : null;
+
+  const matchingGoal = Object.entries(GOAL_TO_CONCERN).find(
+    ([, cid]) => cid === concernId,
+  )?.[0] as UserGoal | undefined;
+  const boostedByGoal = matchingGoal
+    ? preferences.goals.includes(matchingGoal)
+    : false;
+
+  const relatedSteps: EvidenceTrailStep[] = routine
+    .filter((step) => {
+      if (step.category === 'treat') {
+        return step.matchedProductIds.length > 0;
+      }
+      return true;
+    })
+    .filter((step) => {
+      const products = step.matchedProductIds.map((id) =>
+        PRODUCT_CATALOG.find((p) => p.id === id),
+      );
+      return products.some(
+        (p) => p?.supportedConcerns.includes(concernId) || p?.supportedGoals.includes(matchingGoal as UserGoal),
+      );
+    })
+    .map((step) => ({
+      stepId: step.id,
+      part: step.part,
+      label: step.label,
+      category: step.category,
+      rationale: step.rationale,
+      matchedProductIds: step.matchedProductIds,
+    }));
+
+  const unknowns: string[] = [];
+  if (!concern.maskUrls || concern.maskUrls.length === 0) {
+    unknowns.push(
+      'YouCam did not return a visual mask for this concern, so no overlay is available.',
+    );
+  }
+  if (!hasValidRawScore) {
+    unknowns.push(
+      'A valid raw score was not available for this concern, so a DERMALENS focus estimate could not be calculated.',
+    );
+  }
+  unknowns.push(
+    'Cosmetic image analysis cannot establish a medical diagnosis, determine the cause of a skin concern, or prove that any product will work.',
+  );
+
+  return {
+    concernId,
+    concernLabel: concern.label,
+    rawScore: hasValidRawScore ? concern.rawScore : null,
+    uiScore: typeof concern.uiScore === 'number' ? concern.uiScore : null,
+    hasMask: (concern.maskUrls?.length ?? 0) > 0,
+    focusEstimate,
+    relatedSteps,
+    boostedByGoal,
+    matchingGoal: matchingGoal ?? null,
+    unknowns,
+  };
+}
 
 /**
  * Generate the full recommendation: prioritized concerns, routine, and
