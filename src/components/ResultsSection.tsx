@@ -87,6 +87,12 @@ export function ResultsSection({
           </div>
         )}
 
+        {/* Dev-only capture bar — shown prominently near the header after a
+            genuine live analysis. Hidden in production and for demo results. */}
+        {!isDemo && (
+          <DevCaptureBar result={result} previewUrl={previewUrl} />
+        )}
+
         {/* Source attribution + score-direction explainer */}
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-sage-200 bg-sage-50/60 p-4">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-sage-700" />
@@ -228,11 +234,6 @@ export function ResultsSection({
             )}
           </div>
         </div>
-
-        {/* Dev-only capture bar (hidden in production) */}
-        {!isDemo && (
-          <DevCaptureBar result={result} previewUrl={previewUrl} />
-        )}
 
         <div className="mt-12">
           <TrustNotice variant="card" />
