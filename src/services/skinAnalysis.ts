@@ -240,7 +240,9 @@ function analysisError(message: string, retryable: boolean): AnalysisError {
 
 const PROVIDER_ERROR_MESSAGES: Record<string, string> = {
   error_src_face_too_small:
-    'Your face appears too small in this photo for accurate skin analysis. The face should occupy more than 60% of the image width. Move closer to the camera or crop the photo while keeping your entire face visible.',
+    'Your face appears too small in this photo. The face should occupy more than 60% of the image width for accurate skin analysis.',
+  error_large_face_angle:
+    'Your face is turned too far away from the camera. Please choose a straight-on photograph with your eyes level and your nose centered.',
   error_no_face:
     'No face was detected in this photo. Please use a clear, front-facing photo with your face centered and visible.',
   error_multiple_faces:

@@ -423,7 +423,7 @@ export interface RecommendationResult {
 }
 
 export const FOCUS_ESTIMATE_LABEL =
-  'DERMALENS focus estimate — an application-generated way to help prioritize your routine. It is not a clinical severity score.';
+  'DERMALENS focus estimate: an application-generated prioritization hint calculated as 100 minus the YouCam raw score. It is not a clinical severity score or a prediction of treatment benefit.';
 
 /* --------------------------- Evidence Trail ------------------------------ */
 

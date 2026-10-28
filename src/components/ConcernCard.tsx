@@ -75,8 +75,8 @@ export function ConcernCard({ concern }: ConcernCardProps) {
           />
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-charcoal-400">
-          Our estimate of how much a routine could help, derived as 100 minus the
-          raw score. Not a YouCam severity rating.
+          An application-generated prioritization hint (100 minus the raw score).
+          Not a clinical severity score or a prediction of treatment benefit.
         </p>
       </div>
     </div>

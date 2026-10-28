@@ -135,9 +135,9 @@ export function EvidenceTrailPanel({
               </code>
               . For this concern that gives{' '}
               <strong className="text-charcoal-900">{trail.focusEstimate}/100</strong>.
-              A higher focus estimate means the area may benefit more from routine
-              attention. This is an application-generated prioritization hint —{' '}
-              <em>not</em> a YouCam severity score or a clinical measurement.
+              This is an application-generated prioritization hint —{' '}
+              <em>not</em> a clinical severity score or a prediction of treatment
+              benefit.
             </p>
             <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ivory-200">
               <div

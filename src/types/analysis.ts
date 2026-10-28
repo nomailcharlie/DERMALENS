@@ -76,6 +76,7 @@ export interface AnalysisProgress {
 /** Known YouCam provider error codes that the UI maps to tailored guidance. */
 export type YouCamErrorCode =
   | 'error_src_face_too_small'
+  | 'error_large_face_angle'
   | 'error_no_face'
   | 'error_multiple_faces'
   | 'error_src_image_invalid'

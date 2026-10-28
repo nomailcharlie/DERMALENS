@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, ScanLine, Sparkles } from 'lucide-react';
+import { ArrowRight, Camera, Eye, Lightbulb, ScanLine, Sparkles, Play } from 'lucide-react';
 import { PhotoUpload, UploadError } from './PhotoUpload';
 import { TrustNotice } from './TrustNotice';
 
@@ -10,6 +10,12 @@ interface ScanSectionProps {
   onDismissError: () => void;
   onAnalyze: () => void;
   canAnalyze: boolean;
+  /** Whether a saved demo fixture is available. */
+  demoAvailable: boolean;
+  /** Load and display the saved demo. */
+  onTryDemo: () => void;
+  /** Whether the demo is currently loading. */
+  demoLoading: boolean;
 }
 
 const STEPS = [
@@ -38,6 +44,9 @@ export function ScanSection({
   onDismissError,
   onAnalyze,
   canAnalyze,
+  demoAvailable,
+  onTryDemo,
+  demoLoading,
 }: ScanSectionProps) {
   return (
     <section id="scan" className="relative scroll-mt-24 pt-28 sm:pt-32">
@@ -74,9 +83,29 @@ export function ScanSection({
                 }
                 className="group inline-flex items-center gap-2 rounded-full bg-charcoal-900 px-6 py-3.5 text-sm font-medium text-ivory-50 shadow-soft transition-all duration-300 hover:bg-charcoal-800 hover:shadow-lift active:scale-[0.98]"
               >
-                Start your analysis
+                Analyze my photo
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </button>
+              {demoAvailable && (
+                <button
+                  type="button"
+                  onClick={onTryDemo}
+                  disabled={demoLoading}
+                  className="group inline-flex items-center gap-2 rounded-full border border-sage-300 bg-sage-50 px-6 py-3.5 text-sm font-medium text-sage-700 shadow-soft transition-all duration-300 hover:bg-sage-100 hover:shadow-lift active:scale-[0.98] disabled:opacity-60"
+                >
+                  {demoLoading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-sage-400 border-t-sage-700" />
+                      Loading demo…
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      Try the demo
+                    </>
+                  )}
+                </button>
+              )}
               <a
                 href="#how"
                 className="rounded-full border border-ivory-300 px-6 py-3.5 text-sm font-medium text-charcoal-700 transition-colors hover:border-charcoal-300 hover:bg-ivory-100"
@@ -121,6 +150,18 @@ export function ScanSection({
                 <UploadError message={uploadError} onDismiss={onDismissError} />
               )}
 
+              {/* Concise photo tips */}
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-ivory-200 bg-ivory-100/60 p-3">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sage-600" />
+                <div className="text-[11px] leading-relaxed text-charcoal-500">
+                  <p className="font-medium text-charcoal-600">Photo tips</p>
+                  <p className="mt-0.5">
+                    Face the camera directly, eyes level, nose centered. Fill most
+                    of the frame with your face. Use even lighting and no filters.
+                  </p>
+                </div>
+              </div>
+
               <div className="mt-5">
                 <button
                   type="button"
@@ -128,6 +169,7 @@ export function ScanSection({
                   disabled={!canAnalyze}
                   className="group flex w-full items-center justify-center gap-2 rounded-full bg-sage-700 px-6 py-4 text-sm font-semibold text-ivory-50 shadow-soft transition-all duration-300 enabled:hover:bg-sage-800 enabled:hover:shadow-lift enabled:active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-ivory-300 disabled:text-charcoal-400"
                 >
+                  <Camera className="h-4 w-4" />
                   Analyze my skin
                   <ArrowRight className="h-4 w-4 transition-transform duration-300 group-enabled:group-hover:translate-x-0.5" />
                 </button>

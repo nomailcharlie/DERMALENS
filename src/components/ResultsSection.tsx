@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ArrowLeft, ImageOff, Info, Layers } from 'lucide-react';
+import { ArrowLeft, Info, Layers } from 'lucide-react';
 import type { SkinAnalysisResult, SkinOverlay, UserPreferences } from '@/types/analysis';
 import { ConcernCard, ConcernEmpty } from './ConcernCard';
 import { EvidenceTrailPanel } from './EvidenceTrailPanel';
+import { OverlayViewer } from './OverlayViewer';
 import { generateRecommendations } from '@/lib/recommendationEngine';
 import { TrustNotice } from './TrustNotice';
 
@@ -10,12 +11,15 @@ interface ResultsSectionProps {
   result: SkinAnalysisResult;
   previewUrl: string | null;
   onRestart: () => void;
+  /** Whether this result is from a saved demo fixture. */
+  isDemo?: boolean;
 }
 
 export function ResultsSection({
   result,
   previewUrl,
   onRestart,
+  isDemo,
 }: ResultsSectionProps) {
   const [activeOverlay, setActiveOverlay] = useState<SkinOverlay | null>(
     result.overlays[0] ?? null,
@@ -38,6 +42,11 @@ export function ResultsSection({
   };
   const recommendations = generateRecommendations(result, defaultPrefs);
 
+  // Group overlays by concern label for tab navigation.
+  const concernTabs = result.concerns.filter(
+    (c) => result.overlays.some((o) => o.label === c.label),
+  );
+
   return (
     <section className="animate-fade-in pt-28 sm:pt-32">
       <div className="container-page">
@@ -46,20 +55,36 @@ export function ResultsSection({
           onClick={onRestart}
           className="mb-8 inline-flex items-center gap-2 rounded-full border border-ivory-300 px-4 py-2 text-sm font-medium text-charcoal-600 transition-colors hover:bg-ivory-100"
         >
-          <ArrowLeft className="h-4 w-4" /> New analysis
+          <ArrowLeft className="h-4 w-4" /> {isDemo ? 'Back to start' : 'New analysis'}
         </button>
 
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-charcoal-400">
-              Your results
+              {isDemo ? 'Saved demo results' : 'Your results'}
             </p>
-            <h1 className="mt-2 text-3xl sm:text-4xl">Here&apos;s what we read</h1>
+            <h1 className="mt-2 text-3xl sm:text-4xl">
+              {isDemo ? 'Here\u2019s what we read' : 'Here\u2019s what we read'}
+            </h1>
           </div>
           <p className="text-xs text-charcoal-400">
-            Generated {new Date(result.generatedAt).toLocaleString()}
+            {isDemo
+              ? 'Saved from a previous YouCam analysis'
+              : `Generated ${new Date(result.generatedAt).toLocaleString()}`}
           </p>
         </div>
+
+        {/* Demo banner */}
+        {isDemo && (
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-sage-200 bg-sage-50 p-4">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-sage-700" />
+            <p className="text-sm leading-relaxed text-charcoal-700">
+              <strong className="font-semibold">Saved demo sample</strong> — these are
+              results from a previous YouCam analysis of this sample image. No live
+              analysis is being run.
+            </p>
+          </div>
+        )}
 
         {/* Source attribution + score-direction explainer */}
         <div className="mt-6 flex items-start gap-3 rounded-2xl border border-sage-200 bg-sage-50/60 p-4">
@@ -69,8 +94,9 @@ export function ResultsSection({
               <strong className="font-semibold">Measured by the YouCam API.</strong>{' '}
               Each concern shows a YouCam <em>health score</em> —{' '}
               <strong>higher means healthier skin</strong>, not a more severe
-              problem. The DERMALENS focus estimate below it is our application
-              hint for where a routine may help.
+              problem. The DERMALENS focus estimate below it is an application
+              prioritization hint, not a clinical severity score or a prediction
+              of treatment benefit.
             </p>
             <p className="mt-2">
               Masks and scores below come straight from the YouCam model. Routine
@@ -83,52 +109,38 @@ export function ResultsSection({
         <div className="mt-10 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
           {/* Left: photo + overlays + attributes */}
           <div className="space-y-6">
-            <div className="overflow-hidden rounded-3xl border border-ivory-200 bg-ivory-100 shadow-soft">
-              {activeOverlay ? (
-                <img
-                  src={activeOverlay.imageUrl}
-                  alt={`Skin overlay: ${activeOverlay.label}`}
-                  className="mx-auto max-h-[420px] w-full object-contain"
-                />
-              ) : previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt="Your submitted photo"
-                  className="mx-auto max-h-[420px] w-full object-contain"
-                />
-              ) : (
-                <div className="flex h-[280px] flex-col items-center justify-center text-charcoal-400">
-                  <ImageOff className="h-8 w-8" />
-                  <p className="mt-3 text-sm">No preview available</p>
-                </div>
-              )}
-            </div>
+            <OverlayViewer
+              photoUrl={previewUrl}
+              overlay={activeOverlay}
+              isDemo={isDemo}
+            />
 
-            {result.overlays.length > 0 && (
+            {/* Concern tabs for overlay selection */}
+            {concernTabs.length > 0 && (
               <div>
                 <p className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-charcoal-500">
-                  <Layers className="h-3.5 w-3.5" /> Visual overlays
+                  <Layers className="h-3.5 w-3.5" /> Concern overlays
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {result.overlays.map((o) => (
-                    <button
-                      key={o.id}
-                      type="button"
-                      onClick={() => setActiveOverlay(o)}
-                      className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                        activeOverlay?.id === o.id
-                          ? 'border-sage-600 bg-sage-600 text-ivory-50'
-                          : 'border-ivory-300 bg-ivory-50 text-charcoal-600 hover:border-sage-400'
-                      }`}
-                    >
-                      {o.label}
-                    </button>
-                  ))}
+                  {concernTabs.map((c) => {
+                    const overlay = result.overlays.find((o) => o.label === c.label);
+                    if (!overlay) return null;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setActiveOverlay(overlay)}
+                        className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                          activeOverlay?.id === overlay.id
+                            ? 'border-sage-600 bg-sage-600 text-ivory-50'
+                            : 'border-ivory-300 bg-ivory-50 text-charcoal-600 hover:border-sage-400'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="mt-2 text-[11px] text-charcoal-400">
-                  Mask download links from YouCam are valid for 2 hours after the
-                  analysis completes.
-                </p>
               </div>
             )}
 
@@ -174,8 +186,8 @@ export function ResultsSection({
               <>
                 <h2 className="text-xl">Priority focus areas</h2>
                 <p className="mt-1.5 text-sm text-charcoal-500">
-                  Ordered by our focus estimate — where a routine could help most.
-                  Tap a concern to see its full evidence trail.
+                  Ordered by our focus estimate — a prioritization hint, not a
+                  severity score. Tap a concern to see its full evidence trail.
                 </p>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   {topConcerns.length > 0 ? (

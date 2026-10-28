@@ -16,6 +16,7 @@ import type {
   SkinAnalysisResult,
 } from '@/types/analysis';
 import { prepareImageForYouCam, ImagePrepError } from '@/lib/imagePrep';
+import { checkDemoAvailability, loadDemoFixture, resetDemoCache } from '@/lib/demoFixture';
 
 function App() {
   const [status, setStatus] = useState<AnalysisStatus>('idle');
@@ -26,6 +27,11 @@ function App() {
   const [error, setError] = useState<AnalysisError | null>(null);
   const [result, setResult] = useState<SkinAnalysisResult | null>(null);
   const [showCrop, setShowCrop] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
+
+  // Demo fixture availability
+  const [demoAvailable, setDemoAvailable] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   // Original (unprepared) image data URL kept so the crop modal can work from
   // the full-resolution source rather than the downscaled preview.
@@ -35,16 +41,32 @@ function App() {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    void checkDemoAvailability().then(setDemoAvailable);
+  }, []);
+
+  useEffect(() => {
     return () => {
       abortRef.current?.abort();
+      if (originalImageUrl) URL.revokeObjectURL(originalImageUrl);
     };
   }, []);
+
+  const clearPhotoState = useCallback(() => {
+    setSubmission(null);
+    setPreviewUrl(null);
+    setUploadError(null);
+    if (originalImageUrl) {
+      URL.revokeObjectURL(originalImageUrl);
+      setOriginalImageUrl(null);
+    }
+    setOriginalFileName(undefined);
+  }, [originalImageUrl]);
 
   const handleFileSelected = useCallback(
     async (file: File | null, error: string | null) => {
       setUploadError(error);
       if (!file) return;
-      // Keep the original object URL for the crop modal.
+      setIsDemo(false);
       setOriginalImageUrl(URL.createObjectURL(file));
       setOriginalFileName(file.name);
       try {
@@ -71,15 +93,8 @@ function App() {
   );
 
   const handleClear = useCallback(() => {
-    setSubmission(null);
-    setPreviewUrl(null);
-    setUploadError(null);
-    if (originalImageUrl) {
-      URL.revokeObjectURL(originalImageUrl);
-      setOriginalImageUrl(null);
-    }
-    setOriginalFileName(undefined);
-  }, [originalImageUrl]);
+    clearPhotoState();
+  }, [clearPhotoState]);
 
   const runAnalysis = useCallback(async () => {
     if (!submission) return;
@@ -91,6 +106,7 @@ function App() {
     setProgress({ fraction: 0.05, label: 'Preparing' });
     setError(null);
     setResult(null);
+    setIsDemo(false);
     try {
       const res = await analyzeSkin(submission, setProgress, controller.signal);
       if (controller.signal.aborted) return;
@@ -124,15 +140,10 @@ function App() {
     setResult(null);
     setError(null);
     setProgress(null);
-    setSubmission(null);
-    setPreviewUrl(null);
-    setUploadError(null);
-    if (originalImageUrl) {
-      URL.revokeObjectURL(originalImageUrl);
-      setOriginalImageUrl(null);
-    }
-    setOriginalFileName(undefined);
-  }, [originalImageUrl]);
+    setIsDemo(false);
+    clearPhotoState();
+    resetDemoCache();
+  }, [clearPhotoState]);
 
   const handleCropConfirm = useCallback(
     (newSubmission: AnalysisSubmission, newPreviewUrl: string) => {
@@ -141,6 +152,7 @@ function App() {
       setPreviewUrl(newPreviewUrl);
       setError(null);
       setStatus('idle');
+      setIsDemo(false);
     },
     [],
   );
@@ -148,6 +160,31 @@ function App() {
   const handleCropCancel = useCallback(() => {
     setShowCrop(false);
   }, []);
+
+  const handleTryDemo = useCallback(async () => {
+    setDemoLoading(true);
+    setError(null);
+    try {
+      const fixture = await loadDemoFixture();
+      // Clear any live-mode state to prevent mixing.
+      clearPhotoState();
+      setIsDemo(true);
+      setResult(fixture.result);
+      setPreviewUrl(fixture.portraitUrl);
+      setStatus('succeeded');
+    } catch (e) {
+      setError({
+        message:
+          e instanceof Error
+            ? e.message
+            : 'The demo could not be loaded. Please try analyzing your own photo instead.',
+        retryable: false,
+      });
+      setStatus('failed');
+    } finally {
+      setDemoLoading(false);
+    }
+  }, [clearPhotoState]);
 
   const handleNavigate = useCallback((id: string) => {
     if (id === 'top') {
@@ -159,7 +196,6 @@ function App() {
       const top = el.getBoundingClientRect().top + window.scrollY - 76;
       window.scrollTo({ top, behavior: 'smooth' });
     } else {
-      // Target section isn't rendered (e.g. results view) — go to top.
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, []);
@@ -190,6 +226,7 @@ function App() {
             result={result}
             previewUrl={previewUrl}
             onRestart={handleRestart}
+            isDemo={isDemo}
           />
         ) : (
           <ScanSection
@@ -200,6 +237,9 @@ function App() {
             onDismissError={() => setUploadError(null)}
             onAnalyze={handleAnalyze}
             canAnalyze={!!submission && !uploadError}
+            demoAvailable={demoAvailable}
+            onTryDemo={handleTryDemo}
+            demoLoading={demoLoading}
           />
         )}
 
