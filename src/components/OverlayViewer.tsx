@@ -39,6 +39,7 @@ export function OverlayViewer({ photoUrl, overlay, isDemo }: OverlayViewerProps)
     if (overlay) {
       setMode('overlay');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overlay?.id]);
 
   const handlePhotoLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {

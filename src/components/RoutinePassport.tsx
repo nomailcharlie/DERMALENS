@@ -128,7 +128,9 @@ export function RoutinePassport({
                 <p className="text-xs text-charcoal-500">
                   Measured by the YouCam API. Scores are health-favorable —
                   higher means healthier skin. The DERMALENS focus estimate
-                  (100 − raw score) is an app-generated prioritization hint.
+                  (100 − raw score) is an application-generated prioritization
+                  hint. It is not a clinical severity score or a prediction of
+                  treatment benefit.
                 </p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {topConcerns.map((c) => {

@@ -38,8 +38,8 @@ not a medical diagnosis, not a shopping cart, and not a black-box score.
 
 > Screenshots will be added after the first successful live demo recording.
 > Placeholders:
-> - `docs/screenshot-landing.png` — Landing page with upload card
-> - `docs/screenshot-results.png` — Analysis results with concern cards
+> - `docs/screenshot-landing.png` — Landing page with upload card and demo button
+> - `docs/screenshot-results.png` — Analysis results with overlay viewer and concern cards
 > - `docs/screenshot-evidence-trail.png` — Evidence Trail panel open
 > - `docs/screenshot-routine.png` — Routine builder with product shortlist
 > - `docs/screenshot-passport.png` — Routine Passport print preview
@@ -77,9 +77,46 @@ No database, no accounts, no persistent storage of photos or analysis history.
 5. **Normalization**: Raw YouCam `output` entries are typed and normalized.
    `raw_score` and `ui_score` are health-favorable (higher = healthier).
 6. **Score direction**: DERMALENS computes `focusEstimate = 100 - raw_score` as
-   an application-level prioritization hint — never as a YouCam severity score.
+   an application-level prioritization hint. It is not a clinical severity score
+   or a prediction of treatment benefit.
 
-YouCam API docs: https://docs.perfectcorp.com/reference/ai_skin_analysis
+YouCam API docs: https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1
+
+### Visual overlay viewer
+
+The results screen includes an interactive photo-analysis viewer with three
+modes: **Original** (the exact prepared photo submitted to YouCam), **Overlay**
+(the mask blended on top of the photo with an adjustable opacity slider), and
+**Side-by-side**. If a mask's aspect ratio does not match the photo, the viewer
+automatically falls back to side-by-side to avoid distortion. If a mask URL has
+expired, the original photo remains visible with a clear "temporarily
+unavailable" message.
+
+### Saved demo mode
+
+DERMALENS supports a saved demo fixture that lets judges explore the full app
+experience without consuming API units. The fixture consists of:
+
+- `public/demo/portrait.jpg` — the exact photo that was analyzed
+- `public/demo/analysis.json` — normalized results with local mask paths
+- `public/demo/masks/*.png` — actual mask files downloaded from the analysis
+
+The demo is only shown when a complete, valid fixture is present. A developer
+capture workflow (visible only in development mode) downloads all artifacts
+after a genuine successful analysis. No fabricated scores, masks, or output
+fields are ever generated.
+
+### Photo-quality error recovery
+
+YouCam error codes are mapped to friendly, actionable messages:
+
+- `error_src_face_too_small` — offers crop, closer photo, or different photo
+- `error_large_face_angle` — advises choosing a straight-on photo (cropping cannot fix angle)
+- `error_no_face`, `error_multiple_faces`, `error_src_image_invalid`,
+  `error_src_image_too_small` — each with tailored guidance
+
+Raw error codes are never shown as the main error text. A small diagnostic
+reference is included for debugging. The app never auto-retries a rejected image.
 
 ## Technology stack
 
@@ -152,7 +189,24 @@ npm run build       # Vite production build
 ```
 
 Engine and API-response fixture tests use Node's native test runner and are run
-via `npx tsx` against test scripts. See the test scripts in `scripts/`.
+via `npx tsx` against test scripts in `scripts/`. Tests never consume YouCam API
+units — they use saved fixtures and pure-function assertions.
+
+### Test checklist
+
+- [ ] `npm run lint` passes with no errors
+- [ ] `npm run typecheck` passes
+- [ ] `npm run build` passes
+- [ ] `npx tsx --test scripts/test-phase5.mts` — all tests pass
+- [ ] Client bundle scan: no `service_role`, `YOUCAM_API_KEY`, or PerfectCorp URLs in `dist/assets/*.js`
+- [ ] Prepared photo preview is retained and visible behind masks in results
+- [ ] Missing/expired masks show "temporarily unavailable" (not blank)
+- [ ] `error_src_face_too_small` shows crop + closer photo guidance
+- [ ] `error_large_face_angle` shows straight-on photo guidance (no crop suggestion)
+- [ ] Demo mode (when configured) makes zero API requests
+- [ ] Switching between demo and live modes does not mix images or results
+- [ ] Routine Passport excludes the source photo
+- [ ] Focus estimate copy says "prioritization hint, not a clinical severity score"
 
 ## Privacy, image-retention and safety limitations
 

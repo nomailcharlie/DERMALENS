@@ -6,6 +6,7 @@ import { EvidenceTrailPanel } from './EvidenceTrailPanel';
 import { OverlayViewer } from './OverlayViewer';
 import { generateRecommendations } from '@/lib/recommendationEngine';
 import { TrustNotice } from './TrustNotice';
+import { DevCaptureBar } from './DevCaptureBar';
 
 interface ResultsSectionProps {
   result: SkinAnalysisResult;
@@ -227,6 +228,11 @@ export function ResultsSection({
             )}
           </div>
         </div>
+
+        {/* Dev-only capture bar (hidden in production) */}
+        {!isDemo && (
+          <DevCaptureBar result={result} previewUrl={previewUrl} />
+        )}
 
         <div className="mt-12">
           <TrustNotice variant="card" />

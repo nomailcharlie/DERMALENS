@@ -10,8 +10,8 @@
  *   public/demo/portrait.jpg   — the exact photo that was analyzed
  *   public/demo/masks/*.png    — actual mask files downloaded from the analysis
  *
- * The fixture is checked at runtime. If any required piece is missing, the demo
- * button is not shown — no fake content is generated.
+ * The fixture is checked at runtime. If any required piece is missing or is a
+ * placeholder, the demo button is not shown — no fake content is generated.
  */
 
 import type { SkinAnalysisResult, SkinOverlay } from '@/types/analysis';
@@ -34,6 +34,8 @@ interface DemoAnalysisJson {
   taskId: string;
   generatedAt: number;
   provenance: string;
+  /** Present only in the placeholder template. */
+  _status?: string;
 }
 
 const DEMO_BASE = '/demo';
@@ -45,16 +47,36 @@ let availabilityChecked = false;
 let isAvailable = false;
 
 /**
- * Check whether a complete demo fixture exists by attempting to fetch the
- * analysis.json. Caches the result so repeated checks don't re-fetch.
+ * Check whether a complete, valid demo fixture exists. Fetches the analysis.json
+ * and verifies it is not the placeholder template, then checks the portrait
+ * image exists. Caches the result so repeated checks don't re-fetch.
  */
 export async function checkDemoAvailability(): Promise<boolean> {
   if (availabilityChecked) return isAvailable;
   availabilityChecked = true;
 
   try {
-    const res = await fetch(DEMO_ANALYSIS, { method: 'HEAD' });
-    isAvailable = res.ok;
+    const res = await fetch(DEMO_ANALYSIS);
+    if (!res.ok) {
+      isAvailable = false;
+      return false;
+    }
+    const json = await res.json();
+
+    // Reject the placeholder template.
+    if (json._status === 'placeholder' || !json.concerns || json.concerns.length === 0) {
+      isAvailable = false;
+      return false;
+    }
+
+    // Check the portrait image exists.
+    const portraitRes = await fetch(DEMO_PORTRAIT, { method: 'HEAD' });
+    if (!portraitRes.ok) {
+      isAvailable = false;
+      return false;
+    }
+
+    isAvailable = true;
   } catch {
     isAvailable = false;
   }
@@ -87,8 +109,8 @@ export async function loadDemoFixture(): Promise<DemoFixture> {
 
   const json = (await analysisRes.json()) as DemoAnalysisJson;
 
-  if (!json.concerns || !Array.isArray(json.concerns)) {
-    throw new Error('Demo analysis data is malformed — missing concerns.');
+  if (json._status === 'placeholder' || !json.concerns || !Array.isArray(json.concerns) || json.concerns.length === 0) {
+    throw new Error('Demo fixture has not been captured yet. No real data is available.');
   }
   if (!json.overlays || !Array.isArray(json.overlays)) {
     throw new Error('Demo analysis data is malformed — missing overlays.');

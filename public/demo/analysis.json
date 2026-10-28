@@ -1,0 +1,10 @@
+{
+  "_comment": "This file is a template. It must be replaced with actual captured results from a genuine YouCam analysis using the developer capture workflow. The app checks for the existence of this file at runtime — if it contains placeholder data, the demo will not be shown. To capture a real fixture, run the app in development mode, perform a live analysis, then use the 'Capture Demo' button that appears on the results screen.",
+  "_status": "placeholder",
+  "provenance": "Placeholder — no demo fixture has been captured yet. Replace this file with actual YouCam analysis output.",
+  "concerns": [],
+  "overlays": [],
+  "attributes": {},
+  "taskId": "",
+  "generatedAt": 0
+}

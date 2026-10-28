@@ -49,6 +49,7 @@ function App() {
       abortRef.current?.abort();
       if (originalImageUrl) URL.revokeObjectURL(originalImageUrl);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const clearPhotoState = useCallback(() => {
