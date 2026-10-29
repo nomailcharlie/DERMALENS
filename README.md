@@ -2,246 +2,157 @@
 
 **Understand your skin. Choose your next step with confidence.**
 
-DERMALENS is a cosmetic AI skin-analysis application that reads a single facial
-photo, surfaces the concerns that matter today, and maps them to a transparent
-morning and evening skincare routine with explainable product matches.
+DERMALENS is a cosmetic AI skin-analysis experience for adults who want a clearer starting point for a skincare routine. It reads one facial photo, presents four visible concern categories, and turns the returned measurements into an explainable morning and evening routine.
 
-## The problem
+## Links
 
-Consumers are overwhelmed by skincare marketing. They don't know which concerns
-are real for their skin, what products actually address those concerns, or
-whether a routine is justified. Marketing claims are opaque, prices vary by
-region, and "AI-powered" apps rarely explain their reasoning.
+- **Live demo:** https://dermalens-skincare-w-va22.bolt.host
+- **GitHub repository:** https://github.com/nomailcharlie/DERMALENS
 
-## Target audience
+## Problem and audience
 
-Adults (18+) who want an evidence-based starting point for a skincare routine —
-not a medical diagnosis, not a shopping cart, and not a black-box score.
+Skincare advice is often difficult to evaluate: marketing is opaque, prices vary by region, and many tools provide a score without explaining what it means. DERMALENS is intended for adults 18+ who want a transparent, cosmetic image-based starting point—not a diagnosis, treatment plan, or shopping cart.
 
-## Solution and key differentiators
+## Main features
 
-1. **Real YouCam Skin Analysis integration** — genuine API results, not mock
-   data. Scores, masks, and attributes come from the Perfect Corp YouCam model.
-2. **Explainable recommendation engine** — a deterministic, transparent
-   pipeline that traces each concern from YouCam measurement → DERMALENS focus
-   estimate → routine step → product match, with reasons for every decision.
-3. **Skin-to-Shelf Evidence Trail** — tap any concern to see exactly what
-   YouCam returned, how DERMALENS interpreted it, which routine steps respond,
-   and what remains unknown.
-4. **Routine Passport** — a printable, one-page skincare plan generated
-   client-side. No photo embedded, no data uploaded.
-5. **Honest limitations** — unverified prices are shown as unverified. No
-   fabricated ratings, reviews, stock levels, or efficacy claims. Cosmetic
-   analysis is never presented as a medical diagnosis.
+- **Live YouCam Skin Analysis:** upload a photo and receive results from the Perfect Corp YouCam Skin Analysis API.
+- **Four concern categories:** pores, skin texture, wrinkles, and acne/blemishes.
+- **Visual evidence:** switch between the original photo, mask overlay, and side-by-side views when masks are available.
+- **Skin-to-Shelf Evidence Trail:** see the returned scores, DERMALENS interpretation, related routine steps, and known limitations.
+- **Explainable routine planning:** choose goals, routine intensity, and skin sensitivity to shape the recommendation.
+- **Product shortlist:** curated manufacturer information links with prices and regional availability clearly marked as unverified.
+- **Routine Passport:** generate a printable client-side summary without embedding the source photo.
+- **Saved demo:** explore a complete captured result without consuming a new YouCam API unit.
 
-## Screenshots
+## How YouCam integration works
 
-> Screenshots will be added after the first successful live demo recording.
-> Placeholders:
-> - `docs/screenshot-landing.png` — Landing page with upload card and demo button
-> - `docs/screenshot-results.png` — Analysis results with overlay viewer and concern cards
-> - `docs/screenshot-evidence-trail.png` — Evidence Trail panel open
-> - `docs/screenshot-routine.png` — Routine builder with product shortlist
-> - `docs/screenshot-passport.png` — Routine Passport print preview
+The browser never receives the YouCam API key. The live analysis boundary is:
 
-## Architecture and data flow
+```text
+Browser
+  -> prepares the selected image locally
+  -> POSTs the prepared image to the Supabase Edge Function
 
-```
-Browser (React + Vite)
-  ├── User selects photo → image prepared client-side (resize, JPEG)
-  ├── POST to Supabase Edge Function (analyze-skin)
-  │     ├── Holds YOUCAM_API_KEY server-side (never exposed to browser)
-  │     ├── Registers file with YouCam File API
-  │     ├── Uploads image to YouCam-provided storage URL
-  │     ├── Creates YouCam task (SD concerns: wrinkle, pore, texture, acne)
-  │     ├── Polls task status until success/error/timeout
-  │     └── Returns normalized results to browser
-  ├── Browser normalizes YouCam output → SkinAnalysisResult
-  ├── Deterministic recommendation engine generates routine + product matches
-  └── Evidence Trail + Routine Passport rendered client-side
+Supabase Edge Function: analyze-skin
+  -> reads YOUCAM_API_KEY from server-side secret storage
+  -> registers the file with YouCam
+  -> uploads the image to the YouCam-provided storage URL
+  -> creates a skin-analysis task for wrinkle, pore, texture, and acne
+  -> polls the task status and returns normalized results
 
-No database, no accounts, no persistent storage of photos or analysis history.
+Browser
+  -> displays the results
+  -> calculates routine recommendations locally
 ```
 
-### YouCam API integration and task lifecycle
+The Edge Function is configured with JWT verification enabled. It also resumes polling when YouCam reports that a task is still running. The client normalizes the response into the app’s typed analysis result.
 
-1. **File registration**: The edge function calls YouCam's File API to register
-   the image and receive an upload URL + headers.
-2. **Image upload**: The image is uploaded to the YouCam-provided storage URL.
-3. **Task creation**: The function creates a YouCam skin-analysis task with SD
-   concern actions (`wrinkle`, `pore`, `texture`, `acne`).
-4. **Polling**: The function polls the task status endpoint until the task
-   succeeds, errors, or the internal polling ceiling is reached. If still
-   running, the browser transparently resumes polling by re-calling the
-   function with the `task_id`.
-5. **Normalization**: Raw YouCam `output` entries are typed and normalized.
-   `raw_score` and `ui_score` are health-favorable (higher = healthier).
-6. **Score direction**: DERMALENS computes `focusEstimate = 100 - raw_score` as
-   an application-level prioritization hint. It is not a clinical severity score
-   or a prediction of treatment benefit.
+YouCam health scores are health-favorable: a higher score indicates healthier-looking skin for that measurement. DERMALENS calculates `focusEstimate` as `100 - raw_score` and uses it only as an application-level prioritization hint. It is not clinical severity, a diagnosis, or a prediction of treatment benefit.
 
-YouCam API docs: https://docs.perfectcorp.com/reference/ai_skin_analysis/v2.1
+Reference: https://docs.perfectcorp.com/reference/ai_skin_analysis
 
-### Visual overlay viewer
+## Live analysis versus saved demo
 
-The results screen includes an interactive photo-analysis viewer with three
-modes: **Original** (the exact prepared photo submitted to YouCam), **Overlay**
-(the mask blended on top of the photo with an adjustable opacity slider), and
-**Side-by-side**. If a mask's aspect ratio does not match the photo, the viewer
-automatically falls back to side-by-side to avoid distortion. If a mask URL has
-expired, the original photo remains visible with a clear "temporarily
-unavailable" message.
+### Analyze my photo
 
-### Saved demo mode
+This is the live path. The browser prepares the selected image, sends it to the `analyze-skin` Supabase Edge Function, and the function communicates with YouCam. This path uses a YouCam API unit and depends on the server-side `YOUCAM_API_KEY` secret being configured.
 
-DERMALENS supports a saved demo fixture that lets judges explore the full app
-experience without consuming API units. The fixture consists of:
+The browser converts the image to JPEG, preserves its aspect ratio, avoids upscaling, downsizes oversized images, and checks the minimum image dimensions required by the integration before sending it.
 
-- `public/demo/portrait.jpg` — the exact photo that was analyzed
-- `public/demo/analysis.json` — normalized results with local mask paths
-- `public/demo/masks/*.png` — actual mask files downloaded from the analysis
+### Try the demo
 
-The demo is only shown when a complete, valid fixture is present. A developer
-capture workflow (visible only in development mode) downloads all artifacts
-after a genuine successful analysis. No fabricated scores, masks, or output
-fields are ever generated.
+This path loads the saved fixture from `public/demo/` and does not make a new YouCam or Edge Function analysis request. The fixture contains:
 
-### Photo-quality error recovery
+- `public/demo/portrait.jpg`
+- `public/demo/analysis.json`
+- Four masks in `public/demo/masks/` for pores, texture, wrinkles, and acne/blemishes
 
-YouCam error codes are mapped to friendly, actionable messages:
+The included portrait is a synthetic sample image used for the captured demo fixture. The JSON preserves the saved scores, metadata, task ID, and overlay paths from a previous successful YouCam analysis. The demo button appears only when the analysis file, portrait, and every referenced mask are present and valid.
 
-- `error_src_face_too_small` — offers crop, closer photo, or different photo
-- `error_large_face_angle` — advises choosing a straight-on photo (cropping cannot fix angle)
-- `error_no_face`, `error_multiple_faces`, `error_src_image_invalid`,
-  `error_src_image_too_small` — each with tailored guidance
+## Technology and architecture
 
-Raw error codes are never shown as the main error text. A small diagnostic
-reference is included for debugging. The app never auto-retries a rejected image.
+- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, and Lucide React icons
+- **Client backend access:** `@supabase/supabase-js` invokes the deployed Edge Function
+- **Server boundary:** Supabase Edge Function at `supabase/functions/analyze-skin/index.ts`
+- **AI provider:** Perfect Corp YouCam Skin Analysis API
+- **Recommendation layer:** deterministic client-side routine and product-matching logic
+- **Persistence:** no application database, accounts, or analysis history
+- **Saved fixture:** static files under `public/demo/`
 
-## Technology stack
+The Vite alias `@` maps to `src/`. The Supabase function is declared in `supabase/config.toml` as `analyze-skin` with `verify_jwt = true`.
 
-- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide icons
-- **Backend**: Supabase Edge Functions (Deno runtime)
-- **AI**: Perfect Corp YouCam Skin Analysis API (server-side proxy)
-- **Testing**: Node.js native test runner (`node:test`)
-- **No database, no auth, no accounts**
+## Local installation and run
 
-## Local setup and run
+From the repository root:
 
 ```bash
-# Install dependencies
 npm install
-
-# Start the dev server
 npm run dev
+```
 
-# Production build
+To create and preview a production build:
+
+```bash
 npm run build
-
-# Preview the production build
 npm run preview
 ```
 
-## Server-side secret configuration
+## Required environment variables and secrets
 
-The YouCam API key is stored as a Supabase Edge Function secret named
-`YOUCAM_API_KEY`. It is never committed to the repository, never exposed to the
-browser, and never included in the client bundle.
+The browser-side variables are read by `src/services/skinAnalysis.ts`:
 
-To configure it (if deploying your own instance):
-
-```bash
-# Using the Supabase dashboard or CLI, set the edge function secret:
-YOUCAM_API_KEY=your_api_key_here
-```
-
-Do NOT put the real key in `.env`, `config.toml`, or any committed file. The
-edge function reads it from `Deno.env.get('YOUCAM_API_KEY')` at runtime.
-
-## Supabase edge function deployment
-
-The `analyze-skin` edge function lives in `supabase/functions/analyze-skin/`.
-It is configured in `supabase/config.toml` with `verify_jwt = true`.
-
-To deploy (via Supabase MCP tools or dashboard):
-1. Ensure `YOUCAM_API_KEY` is set as an edge function secret.
-2. Deploy the function from `supabase/functions/analyze-skin/index.ts`.
-3. The function is invoked at:
-   `POST {SUPABASE_URL}/functions/v1/analyze-skin`
-
-## Environment variables
-
-| Variable | Where | Purpose |
+| Name | Where it is configured | Purpose |
 |---|---|---|
-| `VITE_SUPABASE_URL` | `.env` (client) | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | `.env` (client) | Supabase anon key (public) |
-| `YOUCAM_API_KEY` | Edge Function secret | YouCam API key (server-only, never in client) |
+| `VITE_SUPABASE_URL` | Local `.env` and hosted client environment | Supabase project URL used for the Edge Function request |
+| `VITE_SUPABASE_ANON_KEY` | Local `.env` and hosted client environment | Public Supabase anon key sent with the request |
 
-The `.env` file contains only public Supabase keys. No private credentials are
-committed to the repository.
+The Edge Function reads this server-only secret in `supabase/functions/analyze-skin/index.ts`:
 
-## Test, typecheck, lint and build commands
+| Name | Where it is configured | Purpose |
+|---|---|---|
+| `YOUCAM_API_KEY` | Supabase Edge Function secret storage | Authenticates server-to-server requests to YouCam |
+
+Never put `YOUCAM_API_KEY` in the browser environment, README, source-controlled files, or the client bundle. The `VITE_` variables are intentionally exposed to the browser because they identify the Supabase project and use the public anon key; access to the analysis function is still controlled by its JWT configuration.
+
+## Available checks
+
+The repository defines these npm scripts:
 
 ```bash
-npm run lint        # ESLint
-npm run typecheck   # TypeScript compiler (no emit)
-npm run build       # Vite production build
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-Engine and API-response fixture tests use Node's native test runner and are run
-via `npx tsx` against test scripts in `scripts/`. Tests never consume YouCam API
-units — they use saved fixtures and pure-function assertions.
+The repository also contains standalone Node test files at `scripts/test-phase5.mts` and `scripts/test-phase6.mts`, but there is no `npm test` script or committed test-runner configuration in `package.json`. A separate fixture-validation npm script is not defined; the saved demo fixture is checked at runtime by the demo loader before the button is shown or the fixture is loaded.
 
-### Test checklist
+## Privacy and image processing
 
-- [ ] `npm run lint` passes with no errors
-- [ ] `npm run typecheck` passes
-- [ ] `npm run build` passes
-- [ ] `npx tsx --test scripts/test-phase5.mts` — all tests pass
-- [ ] Client bundle scan: no `service_role`, `YOUCAM_API_KEY`, or PerfectCorp URLs in `dist/assets/*.js`
-- [ ] Prepared photo preview is retained and visible behind masks in results
-- [ ] Missing/expired masks show "temporarily unavailable" (not blank)
-- [ ] `error_src_face_too_small` shows crop + closer photo guidance
-- [ ] `error_large_face_angle` shows straight-on photo guidance (no crop suggestion)
-- [ ] Demo mode (when configured) makes zero API requests
-- [ ] Switching between demo and live modes does not mix images or results
-- [ ] Routine Passport excludes the source photo
-- [ ] Focus estimate copy says "prioritization hint, not a clinical severity score"
+- The selected image is prepared in the browser before live analysis: it may be resized and converted to JPEG to meet the integration limits.
+- Live analysis sends the prepared image to YouCam through the Supabase Edge Function. DERMALENS does not store the photo in its own database.
+- The current in-app notice states that the photo is processed by YouCam and removed by the provider within 30 days. Result download links are valid for two hours after processing completes.
+- Do not interpret this as “never processed” or “never retained”: the image is sent to the provider and may be retained according to the provider’s processing terms during that period.
+- The saved demo uses local fixture files and does not send a new image for analysis.
+- The Routine Passport is generated in the browser, contains no source photo, and is not uploaded by the app.
+- There are no accounts, persistent analysis history, or application database records in this project.
 
-## Privacy, image-retention and safety limitations
+## Limitations and responsible use
 
-- DERMALENS does not store your photo. It is sent to the YouCam API for
-  processing and removed by the provider within 30 days.
-- The Routine Passport is generated entirely client-side. No photo or personal
-  data is uploaded to any external service.
-- No accounts, no database, no persistent analysis history.
-- Cosmetic image analysis does not establish a medical diagnosis, determine the
-  cause of a skin concern, or prove that a product will work.
-- Results depend on photo quality, lighting, and facial positioning.
+- **Not a medical diagnosis.** DERMALENS provides cosmetic, image-based observations for educational purposes only. Consult a qualified dermatologist or clinician for diagnosis or treatment.
+- Results depend on lighting, focus, angle, facial positioning, makeup, filters, and the quality of the selected image.
+- A YouCam score is a model output, not a clinical measurement. Higher health-favorable scores indicate healthier-looking skin for that concern; they do not establish a condition or its cause.
+- `focusEstimate` is an application-generated prioritization hint based on `100 - raw_score`, not clinical severity and not a treatment-outcome prediction.
+- Routine suggestions use user-selected goals and sensitivity settings. They do not guarantee product effectiveness or suitability.
+- Product prices and regional availability are not verified. The app links to official manufacturer information pages rather than retailer checkout pages.
+- Product information, ratings, reviews, inventory, discounts, clinical validation, customer trials, and business partnerships are not claimed by this project.
+- Use a consented adult portrait and avoid relying on the output for urgent or medical decisions.
 
-## Product catalog limitations
+## Hackathon context
 
-- The catalog contains 6 products from 3 brands (CeraVe, Neutrogena, The
-  Ordinary).
-- All product prices are unverified. The UI shows "Check current regional
-  price" and links to official manufacturer information pages.
-- Regional availability is not confirmed for any product.
-- No ratings, reviews, stock levels, discounts, or checkout links are included.
-- Product information links point to official manufacturer catalog/range pages,
-  not to retailer checkout pages.
-
-## Demo checklist
-
-See `DEMO_CHECKLIST.md` for the recommended recording flow, including the new
-Evidence Trail and Routine Passport features.
-
-## Public demo URL
-
-> Demo URL: _to be added after deployment_
+DERMALENS is a hackathon project demonstrating a secure server-side AI integration, transparent interpretation of model output, evidence-oriented explanations, and responsible cosmetic product guidance. The implementation intentionally favors traceability and clear unknowns over fabricated precision.
 
 ## License
 
-MIT License for the project's original code. See `LICENSE`.
+The project’s original source code is licensed under the MIT License. See [LICENSE](LICENSE).
 
-This license does not grant ownership of Perfect Corp/YouCam APIs, manufacturer
-trademarks (CeraVe, Neutrogena, The Ordinary), or any third-party assets.
+That license does not grant ownership of Perfect Corp/YouCam services, manufacturer trademarks or product information, or third-party libraries and assets.
