@@ -1,0 +1,70 @@
+{
+  "provenance": "Saved demo fixture from a genuine YouCam skin analysis. Captured by the developer capture workflow.",
+  "capturedAt": "2026-10-28T11:13:05.508Z",
+  "concerns": [
+    {
+      "id": "pore",
+      "label": "Pores",
+      "description": "Visible or enlarged pore size across the T-zone and cheeks.",
+      "uiScore": 73,
+      "rawScore": 62.50525736808777,
+      "focusEstimate": 37,
+      "maskUrls": []
+    },
+    {
+      "id": "texture",
+      "label": "Skin texture",
+      "description": "Surface roughness and unevenness of the skin.",
+      "uiScore": 87,
+      "rawScore": 91.5647566318512,
+      "focusEstimate": 8,
+      "maskUrls": []
+    },
+    {
+      "id": "wrinkle",
+      "label": "Wrinkles",
+      "description": "Fine lines and deeper wrinkles associated with skin aging.",
+      "uiScore": 80,
+      "rawScore": 89.64381217956543,
+      "focusEstimate": 10,
+      "maskUrls": []
+    },
+    {
+      "id": "acne",
+      "label": "Acne & blemishes",
+      "description": "Visible blemishes, breakouts and congestion detected across the face.",
+      "uiScore": 99,
+      "rawScore": 100,
+      "focusEstimate": 0,
+      "maskUrls": []
+    }
+  ],
+  "overlays": [
+    {
+      "id": "pore-0",
+      "label": "Pores",
+      "imagePath": "masks/pore-0.png"
+    },
+    {
+      "id": "texture-0",
+      "label": "Skin texture",
+      "imagePath": "masks/texture-0.png"
+    },
+    {
+      "id": "wrinkle-0",
+      "label": "Wrinkles",
+      "imagePath": "masks/wrinkle-0.png"
+    },
+    {
+      "id": "acne-0",
+      "label": "Acne & blemishes",
+      "imagePath": "masks/acne-0.png"
+    }
+  ],
+  "attributes": {
+    "overallScore": 85,
+    "estimatedSkinAge": 26
+  },
+  "taskId": "c8ORyXnjyCGJB9-ki-Z_HLv5fVGR7cgD6ZRQjLed4Dj6t_kqEPOdFPLX4dK1hqEXSpcgV8WTLEnG8Q2PXjtLzQ",
+  "generatedAt": 1793185897067
+}
