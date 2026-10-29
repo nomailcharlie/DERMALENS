@@ -76,6 +76,21 @@ export async function checkDemoAvailability(): Promise<boolean> {
       return false;
     }
 
+    // A fixture is unavailable until every referenced local mask exists.
+    if (!Array.isArray(json.overlays) || json.overlays.length === 0) {
+      isAvailable = false;
+      return false;
+    }
+    const maskChecks = await Promise.all(
+      json.overlays.map((overlay: { imagePath: string }) =>
+        fetch(`${DEMO_BASE}/${overlay.imagePath}`, { method: 'HEAD' }),
+      ),
+    );
+    if (maskChecks.some((mask) => !mask.ok)) {
+      isAvailable = false;
+      return false;
+    }
+
     isAvailable = true;
   } catch {
     isAvailable = false;
@@ -112,8 +127,17 @@ export async function loadDemoFixture(): Promise<DemoFixture> {
   if (json._status === 'placeholder' || !json.concerns || !Array.isArray(json.concerns) || json.concerns.length === 0) {
     throw new Error('Demo fixture has not been captured yet. No real data is available.');
   }
-  if (!json.overlays || !Array.isArray(json.overlays)) {
+  if (!json.overlays || !Array.isArray(json.overlays) || json.overlays.length === 0) {
     throw new Error('Demo analysis data is malformed — missing overlays.');
+  }
+
+  const maskChecks = await Promise.all(
+    json.overlays.map((overlay) =>
+      fetch(`${DEMO_BASE}/${overlay.imagePath}`, { method: 'HEAD' }),
+    ),
+  );
+  if (maskChecks.some((mask) => !mask.ok)) {
+    throw new Error('Demo fixture is incomplete — one or more mask files are missing.');
   }
 
   // Convert local mask paths to full URLs.
